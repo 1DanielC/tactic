@@ -1,12 +1,5 @@
 use dioxus::prelude::*;
-use dioxus::prelude::*;
 use dioxus_desktop::tao;
-use dioxus_desktop::tao::window::Icon;
-use image::{DynamicImage, GenericImageView, RgbaImage};
-use resvg::tiny_skia::Pixmap;
-use resvg::usvg::Options;
-use resvg::{tiny_skia, usvg};
-use std::fs;
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
