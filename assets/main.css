@@ -3,24 +3,50 @@ body {
   background-color: #fff;
   color: #000;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 20px;
+  margin: 0;                 /* remove default margin */
+  min-height: 100vh;         /* ensure body covers full viewport */
 }
 
 #app {
   margin: 0;
-  width: 150px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  min-height: 100vh;         /* force layout to fill screen */
 }
 
 #header {
-  width: 100%;
+  display: flex;
+  padding: 5px;
   height: 50px;
-  padding: 0% 2%;
+  align-items: center;            /* center vertically */
+  justify-content: flex-start;    /* align to the left horizontally */
   background-color: #2d72d8;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 10;
+  text-align: left;
 }
 
+#content {
+  flex: 1;                   /* take all available space */
+  padding: 20px;             /* optional inner spacing */
+}
 
+/* ---------- Footer (container for rows) ---------- */
+#footer {
+  margin-top: auto;               /* pushes footer to bottom */
+  background: #ececec;
+}
 
+/* Each row in the footer */
+#footer-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #acacac;
+  background: #ececec;
+  border-top: 1px solid #a1a1a5;  /* thin separator between rows */
+  font-weight: bold;
+}

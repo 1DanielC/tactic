@@ -1,21 +1,29 @@
 use dioxus::prelude::*;
 use dioxus::prelude::*;
 use dioxus_desktop::tao;
+use dioxus_desktop::tao::window::Icon;
+use image::{DynamicImage, GenericImageView, RgbaImage};
+use resvg::tiny_skia::Pixmap;
+use resvg::usvg::Options;
+use resvg::{tiny_skia, usvg};
+use std::fs;
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
-const HEADER_SVG: Asset = asset!("/assets/header.svg");
 
 fn main() {
     // Build a window configuration
     let window = tao::window::WindowBuilder::new()
-        .with_inner_size(tao::dpi::LogicalSize::new(800.0, 600.0))
+        .with_inner_size(tao::dpi::LogicalSize::new(400.0, 600.0))
+        .with_title("OpenSpace Desktop Sync")
         // optionally set min/max, resizable, etc.
-        .with_min_inner_size(tao::dpi::LogicalSize::new(800.0, 600.0))
-        .with_max_inner_size(tao::dpi::LogicalSize::new(800.0, 600.0))
-        .with_resizable(false);  // make it fixed size if you want
+        .with_min_inner_size(tao::dpi::LogicalSize::new(250.0, 250.0))
+        .with_max_inner_size(tao::dpi::LogicalSize::new(400.0, 600.0))
+        .with_resizable(true); // make it fixed size if you want
 
-    dioxus::launch(App);
+    dioxus::LaunchBuilder::new()
+        .with_cfg(dioxus_desktop::Config::new().with_window(window))
+        .launch(App);
 }
 
 #[component]
@@ -31,16 +39,14 @@ fn App() -> Element {
 #[component]
 pub fn Hero() -> Element {
     rsx! {
-        div {
-            id: "app",
-            img { src: HEADER_SVG, id: "header" }
-            div { id: "links",
-                a { href: "https://dioxuslabs.com/learn/0.6/", "📚 Learn Dioxus" }
-                a { href: "https://dioxuslabs.com/awesome", "🚀 Awesome Dioxus" }
-                a { href: "https://github.com/dioxus-community/", "📡 Community Libraries" }
-                a { href: "https://github.com/DioxusLabs/sdk", "⚙️ Dioxus Development Kit" }
-                a { href: "https://marketplace.visualstudio.com/items?itemName=DioxusLabs.dioxus", "💫 VSCode Extension" }
-                a { href: "https://discord.gg/XgGxMSkvUM", "👋 Community Discord" }
+        div { id: "app",
+            div { id: "header", span { "OpenSpace Desktop Sync" } }
+            div { id: "content",
+                p { "the sauce" }
+            }
+            div { id: "footer",
+                div { id: "footer-bar", p { "Le Camera is disconnected" }}
+                div { id: "footer-bar", p { "Le App is Updated" }}
             }
         }
     }
