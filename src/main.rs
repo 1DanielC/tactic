@@ -42,12 +42,22 @@ pub fn Hero() -> Element {
         div { id: "app",
             div { id: "header", span { "OpenSpace Desktop Sync" } }
             div { id: "content",
-                p { "the sauce" }
+                { build_content() }
             }
             div { id: "footer",
                 div { id: "footer-bar", p { "Le Camera is disconnected" }}
                 div { id: "footer-bar", p { "Le App is Updated" }}
             }
         }
+    }
+}
+
+fn build_content() -> Element {
+    rsx! { button { id: "button", onclick: move |_| async move { upload_file() }, "Upload" } }
+}
+
+fn upload_file() {
+    if let Some(path) = rfd::FileDialog::new().pick_file() {
+        println!("Selected file: {:?}", path);
     }
 }
