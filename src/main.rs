@@ -1,8 +1,7 @@
 use dioxus::prelude::*;
 use dioxus_desktop::tao;
 
-const FAVICON: Asset = asset!("/assets/favicon.ico");
-const MAIN_CSS: Asset = asset!("/assets/main.css");
+const MAIN_CSS: &str = include_str!("../assets/main.css");
 
 fn main() {
     // Build a window configuration
@@ -14,18 +13,20 @@ fn main() {
         .with_max_inner_size(tao::dpi::LogicalSize::new(400.0, 600.0))
         .with_resizable(true); // make it fixed size if you want
 
-    dioxus::LaunchBuilder::new()
-        .with_cfg(dioxus_desktop::Config::new().with_window(window))
+    LaunchBuilder::new()
+        .with_cfg(dioxus_desktop::Config::new()
+            .with_window(window)
+            .with_custom_head(format!(r#"<style>{}</style>"#, MAIN_CSS))
+        )
         .launch(App);
 }
 
 #[component]
 fn App() -> Element {
     rsx! {
-        document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
-        Hero {}
 
+        Hero {}
     }
 }
 

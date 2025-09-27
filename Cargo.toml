@@ -1,8 +1,9 @@
 [package]
-name = "tactic"
+name = "openspace-sync"
 version = "0.1.0"
 authors = ["Daniel Christensen <daniel@openspace.ai>"]
 edition = "2021"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -30,3 +31,10 @@ inherits = "dev"
 
 [profile.android-dev]
 inherits = "dev"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+opt-level = "z"   # or "s" for a bit faster but larger
+panic = "abort"
+strip = true      # requires nightly cargo <1.84; otherwise: strip after build
