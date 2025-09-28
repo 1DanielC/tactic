@@ -1,12 +1,13 @@
 mod api;
-mod camera_finder;
-mod DeviceType;
+mod camera_fs;
+mod device_type;
+mod json;
 
+use crate::api::http_client;
+use crate::camera_fs::camera_finder::scan_for_camera_fs;
 use dioxus::prelude::*;
 use dioxus_desktop::tao;
-use reqwest::{Client, Response};
-use crate::api::http_client;
-use crate::camera_finder::{scan_for_camera, scan_for_camera_2};
+use reqwest::Client;
 const MAIN_CSS: &str = include_str!("../assets/main.css");
 
 fn main() {
@@ -20,9 +21,10 @@ fn main() {
         .with_resizable(true); // make it fixed size if you want
 
     LaunchBuilder::new()
-        .with_cfg(dioxus_desktop::Config::new()
-            .with_window(window)
-            .with_custom_head(format!(r#"<style>{}</style>"#, MAIN_CSS))
+        .with_cfg(
+            dioxus_desktop::Config::new()
+                .with_window(window)
+                .with_custom_head(format!(r#"<style>{}</style>"#, MAIN_CSS)),
         )
         .launch(App);
 }
@@ -57,7 +59,7 @@ fn build_content(http_client: Client) -> Element {
     do_http_stuff(http_client);
     rsx! {
         button { class: "button", onclick: move |_| async move { upload_file() }, "Upload" },
-        button { class: "button", onclick: move |_| async move { scan_for_camera_2() }, "Camera?" },
+        button { class: "button", onclick: move |_| async move { scan_for_camera_fs(); }, "Camera?" },
     }
 }
 
