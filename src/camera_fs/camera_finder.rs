@@ -1,19 +1,8 @@
-use crate::camera_fs::sys_profiler_usb::{UsbNode, UsbRoot};
+use std::fs;
+use crate::camera_fs::sys_profiler_usb::UsbRoot;
 use crate::device_type::{DeviceType, VendorType};
-use nusb::{list_devices, DeviceInfo, MaybeFuture};
-use std::ops::Deref;
 use std::path::PathBuf;
 use std::process::Command;
-
-fn scan_for_camera_or_none() -> Option<DeviceInfo> {
-    list_devices()
-        .wait()
-        .expect("Failed to scan devices for camera")
-        .find(|dev| {
-            VendorType::from_vendor_id(dev.vendor_id()).is_some()
-                && DeviceType::from_product_id(dev.product_id()).is_some()
-        })
-}
 
 pub fn scan_for_camera_fs() -> Option<PathBuf> {
     let os = std::env::consts::OS;

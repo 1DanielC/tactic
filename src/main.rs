@@ -2,9 +2,10 @@ mod api;
 mod camera_fs;
 mod device_type;
 mod json;
+mod openspace;
 
 use crate::api::http_client;
-use crate::camera_fs::camera_finder::scan_for_camera_fs;
+use crate::openspace::upload_all_files::upload_all_files;
 use dioxus::prelude::*;
 use dioxus_desktop::tao;
 use reqwest::Client;
@@ -59,7 +60,7 @@ fn build_content(http_client: Client) -> Element {
     do_http_stuff(http_client);
     rsx! {
         button { class: "button", onclick: move |_| async move { upload_file() }, "Upload" },
-        button { class: "button", onclick: move |_| async move { scan_for_camera_fs(); }, "Camera?" },
+        button { class: "button", onclick: move |_| async move { upload_all_files(); }, "Camera?" },
     }
 }
 
