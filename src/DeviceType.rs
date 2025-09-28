@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VendorType {
     Insta,
@@ -5,18 +7,20 @@ pub enum VendorType {
 }
 
 impl VendorType {
-    pub fn vendor_id(&self) -> i32 {
-        match self {
-            VendorType::Insta => 1,
-            VendorType::Theta => 2,
+    pub fn from_vendor_id(vendor_id: u16) -> Option<Self> {
+        match vendor_id {
+            1802 => Some(VendorType::Insta),
+            1482 => Some(VendorType::Theta),
+            _ => None,
         }
     }
+}
 
-    pub fn from_vendor_id(vendor_id: i32) -> Option<Self> {
-        match vendor_id {
-            1 => Some(VendorType::Insta),
-            2 => Some(VendorType::Theta),
-            _ => None,
+impl fmt::Display for VendorType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VendorType::Insta => write!(f, "Insta"),
+            VendorType::Theta => write!(f, "Theta"),
         }
     }
 }
@@ -28,25 +32,21 @@ pub enum DeviceType {
 }
 
 impl DeviceType {
-    pub fn vendor_type(&self) -> VendorType {
-        match self {
-            DeviceType::Insta360OneX2 => VendorType::Insta,
-            DeviceType::ThetaZ1 => VendorType::Theta,
-        }
-    }
-
-    pub fn product_id(&self) -> i32 {
-        match self {
-            DeviceType::Insta360OneX2 => 11,
-            DeviceType::ThetaZ1 => 12,
-        }
-    }
-
-    pub fn from_product_id(product_id: i32) -> Option<Self> {
+    pub fn from_product_id(product_id: u16) -> Option<Self> {
         match product_id {
-            11 => Some(DeviceType::Insta360OneX2),
-            12 => Some(DeviceType::ThetaZ1),
+            16422 => Some(DeviceType::Insta360OneX2),
+            16423 => Some(DeviceType::Insta360OneX2),
+            877 => Some(DeviceType::ThetaZ1),
             _ => None,
+        }
+    }
+}
+
+impl fmt::Display for DeviceType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DeviceType::Insta360OneX2 => write!(f, "Insta360 One X2"),
+            DeviceType::ThetaZ1 => write!(f, "Theta Z1"),
         }
     }
 }

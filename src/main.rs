@@ -1,6 +1,12 @@
+mod api;
+mod camera_finder;
+mod DeviceType;
+
 use dioxus::prelude::*;
 use dioxus_desktop::tao;
-
+use reqwest::{Client, Response};
+use crate::api::http_client;
+use crate::camera_finder::{scan_for_camera, scan_for_camera_2};
 const MAIN_CSS: &str = include_str!("../assets/main.css");
 
 fn main() {
@@ -32,11 +38,12 @@ fn App() -> Element {
 
 #[component]
 pub fn Hero() -> Element {
+    let http_client = http_client();
     rsx! {
         div { id: "app",
             div { id: "header", span { "OpenSpace Desktop Sync" } }
             div { id: "content",
-                { build_content() }
+                { build_content(http_client) }
             }
             div { id: "footer",
                 div { id: "footer-bar", p { "Le Camera is disconnected" }}
@@ -46,8 +53,18 @@ pub fn Hero() -> Element {
     }
 }
 
-fn build_content() -> Element {
-    rsx! { button { id: "button", onclick: move |_| async move { upload_file() }, "Upload" } }
+fn build_content(http_client: Client) -> Element {
+    do_http_stuff(http_client);
+    rsx! {
+        button { class: "button", onclick: move |_| async move { upload_file() }, "Upload" },
+        button { class: "button", onclick: move |_| async move { scan_for_camera_2() }, "Camera?" },
+    }
+}
+
+async fn do_http_stuff(http_client: Client) {
+    let response_body = http_client.get("https://example/com").send().await.unwrap();
+    let body = response_body.text().await.unwrap();
+    println!("{}", body);
 }
 
 fn upload_file() {
