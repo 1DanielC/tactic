@@ -29,6 +29,9 @@ where
     }
 }
 
+/**
+ * Data model for the output of the sys_profiler_usb tool for MacOS
+*/
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UsbRoot {
     #[serde(rename = "SPUSBDataType")]
@@ -115,5 +118,4 @@ pub struct UsbVolume {
 
     #[serde(rename = "volume_uuid", default)]
     pub volume_uuid: Option<String>,
-
 }

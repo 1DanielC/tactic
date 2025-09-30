@@ -1,4 +1,3 @@
-use std::fs;
 use crate::camera_fs::sys_profiler_usb::UsbRoot;
 use crate::device_type::{DeviceType, VendorType};
 use std::path::PathBuf;

@@ -4,19 +4,27 @@ version = "0.1.0"
 authors = ["Daniel Christensen <daniel@openspace.ai>"]
 edition = "2021"
 
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 dioxus = { version = "0.6.0", features = [] }
 dioxus-desktop = "0.6.3"
-mountpoints = "0.2"
+regex = "1.11.3"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
-rfd = "0.14"
+# json mapping
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-regex = "1.11.3"
+
+# Filesystem and MTP support
+rfd = "0.14"
 walkdir = "2"
+mtp-rs = "0.1.0"
+
+# Oauth2 with PKCE support (using auth on localhost)
+oauth2 = { version = "4", features = ["reqwest", "rustls-tls"] }
+pkce = "0.2.0"
+uuid = { version = "1.18.1", features = ["v4"] }
+futures = "0.3.31"
 
 [features]
 default = ["desktop"]

@@ -9,6 +9,8 @@ use crate::openspace::upload_all_files::upload_all_files;
 use dioxus::prelude::*;
 use dioxus_desktop::tao;
 use reqwest::Client;
+use crate::openspace::get_upload_state::get_upload_state;
+
 const MAIN_CSS: &str = include_str!("../assets/main.css");
 
 fn main() {
@@ -61,6 +63,10 @@ fn build_content(http_client: Client) -> Element {
     rsx! {
         button { class: "button", onclick: move |_| async move { upload_file() }, "Upload" },
         button { class: "button", onclick: move |_| async move { upload_all_files(); }, "Camera?" },
+        button { class: "button", onclick: move |_| async move {
+            let res_string = get_upload_state().unwrap();
+            println!("{}", res_string);
+        }, "State?" },
     }
 }
 
