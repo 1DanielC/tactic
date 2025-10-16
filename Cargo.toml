@@ -25,6 +25,7 @@ oauth2 = { version = "4", features = ["reqwest", "rustls-tls"] }
 pkce = "0.2.0"
 uuid = { version = "1.18.1", features = ["v4"] }
 futures = "0.3.31"
+md5 = "0.7"
 
 [features]
 default = ["desktop"]

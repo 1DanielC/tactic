@@ -44,6 +44,40 @@ impl TictacUploadState {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetOrCreateUploadResponse {
+    pub uploads: Vec<UploadWithMd5>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UploadWithMd5 {
+    #[serde(rename = "uploadId")]
+    pub upload_id: String,
+    pub md5: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateUploadRequest {
+    #[serde(rename = "deviceId")]
+    pub device_id: String,
+    #[serde(rename = "uploadId")]
+    pub upload_id: String,
+    #[serde(rename = "deviceFilename")]
+    pub device_filename: String,
+    pub tags: Option<Vec<String>>,
+}
+
+impl CreateUploadRequest {
+    pub fn new(device_id: String, upload_id: String, device_filename: String) -> Self {
+        Self {
+            device_id,
+            upload_id,
+            device_filename,
+            tags: None,
+        }
+    }
+}
+
 pub fn get_upload_state() -> reqwest::Result<String> {
     let device_id = "Insta360 OneX:sn:IXE04B8B3D123".to_string();
     let uploads = vec![TictacUploadState::new(

@@ -59,23 +59,19 @@ pub fn Hero() -> Element {
 }
 
 fn build_content(http_client: Client) -> Element {
-    do_http_stuff(http_client);
     rsx! {
         button { class: "button", onclick: move |_| async move { upload_file() }, "Upload" },
-        button { class: "button", onclick: move |_| async move { upload_all_files(); }, "Camera?" },
+        button { class: "button", onclick: move |_| async move {
+            if let Err(e) = upload_all_files() {
+                eprintln!("Upload failed: {}", e);
+            }
+        }, "Camera?" },
         button { class: "button", onclick: move |_| async move {
             let res_string = get_upload_state().unwrap();
             println!("{}", res_string);
         }, "State?" },
     }
 }
-
-async fn do_http_stuff(http_client: Client) {
-    let response_body = http_client.get("https://example/com").send().await.unwrap();
-    let body = response_body.text().await.unwrap();
-    println!("{}", body);
-}
-
 fn upload_file() {
     if let Some(path) = rfd::FileDialog::new().pick_file() {
         println!("Selected file: {:?}", path);
