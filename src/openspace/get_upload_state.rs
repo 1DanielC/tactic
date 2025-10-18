@@ -33,24 +33,7 @@ impl TicTacUploadRequest {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetOrCreateUploadResponse {
-    pub uploads: Vec<UploadWithFileName>,
+    #[serde(rename = "uploadId")]
+    pub upload_id: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UploadWithFileName {
-    #[serde(rename = "uploadId")]
-    pub upload_id: String,
-    #[serde(rename = "fileName")]
-    pub file_name: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateUploadRequest {
-    #[serde(rename = "deviceId")]
-    pub device_id: String,
-    #[serde(rename = "uploadId")]
-    pub upload_id: String,
-    #[serde(rename = "deviceFilename")]
-    pub device_filename: String,
-    pub tags: Option<Vec<String>>,
-}
