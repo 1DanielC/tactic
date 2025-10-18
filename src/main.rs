@@ -4,12 +4,9 @@ mod device_type;
 mod json;
 mod openspace;
 
-use crate::api::http_client;
 use crate::openspace::upload_all_files::upload_all_files;
 use dioxus::prelude::*;
 use dioxus_desktop::tao;
-use reqwest::Client;
-use crate::openspace::get_upload_state::get_upload_state;
 
 const MAIN_CSS: &str = include_str!("../assets/main.css");
 
@@ -43,13 +40,10 @@ fn App() -> Element {
 
 #[component]
 pub fn Hero() -> Element {
-    let http_client = http_client();
     rsx! {
         div { id: "app",
             div { id: "header", span { "OpenSpace Desktop Sync" } }
-            div { id: "content",
-                { build_content(http_client) }
-            }
+            div { id: "content", { build_content() } }
             div { id: "footer",
                 div { id: "footer-bar", p { "Le Camera is disconnected" }}
                 div { id: "footer-bar", p { "Le App is Updated" }}
@@ -58,22 +52,10 @@ pub fn Hero() -> Element {
     }
 }
 
-fn build_content(http_client: Client) -> Element {
+fn build_content() -> Element {
     rsx! {
-        button { class: "button", onclick: move |_| async move { upload_file() }, "Upload" },
         button { class: "button", onclick: move |_| async move {
-            if let Err(e) = upload_all_files() {
-                eprintln!("Upload failed: {}", e);
-            }
-        }, "Camera?" },
-        button { class: "button", onclick: move |_| async move {
-            let res_string = get_upload_state().unwrap();
-            println!("{}", res_string);
-        }, "State?" },
-    }
-}
-fn upload_file() {
-    if let Some(path) = rfd::FileDialog::new().pick_file() {
-        println!("Selected file: {:?}", path);
+            if let Err(e) = upload_all_files() { eprintln!("Upload failed: {}", e) }
+        }, "Upload Files?" },
     }
 }
