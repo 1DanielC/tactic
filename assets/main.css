@@ -3,21 +3,23 @@ body {
   background-color: #fff;
   color: #000;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;                 /* remove default margin */
-  min-height: 100vh;         /* ensure body covers full viewport */
+  margin: 0;
+  overflow: hidden;          /* prevent body scroll */
+  height: 100vh;             /* fixed height */
 }
 
 #app {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;         /* force layout to fill screen */
+  height: 100vh;             /* fixed height to viewport */
+  overflow: hidden;          /* prevent app-level scroll */
 }
 
 #header {
   display: flex;
   padding: 5px;
-  height: 50px;
+  height: 10vh;
   align-items: center;            /* center vertically */
   justify-content: flex-start;    /* align to the left horizontally */
   background-color: #2d72d8;
@@ -25,17 +27,22 @@ body {
   font-size: 20px;
   font-weight: 10;
   text-align: left;
+  flex-shrink: 0;            /* prevent header from shrinking */
 }
 
 #content {
   flex: 1;                   /* take all available space */
   padding: 20px;             /* optional inner spacing */
+  height: 70vh;
+  overflow-y: auto;          /* only content area scrolls */
+  overflow-x: hidden;        /* prevent horizontal scroll */
 }
 
 /* ---------- Footer (container for rows) ---------- */
 #footer {
-  margin-top: auto;               /* pushes footer to bottom */
   background: #ececec;
+  flex-shrink: 0;            /* prevent footer from shrinking */
+  height: 20vh;
 }
 
 /* Each row in the footer */
@@ -49,4 +56,102 @@ body {
   background: #ececec;
   border-top: 1px solid #a1a1a5;  /* thin separator between rows */
   font-weight: bold;
+}
+
+/* ---------- Upload List Styling ---------- */
+.upload-list-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.upload-item {
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #f0f0f0;
+  border-radius: 5px;
+}
+
+.upload-filename {
+  margin: 5px 0;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.upload-status {
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.status-uploading {
+  color: #2196F3;
+}
+
+.status-completed {
+  color: #4CAF50;
+}
+
+.status-skipped {
+  color: #757575;
+}
+
+.status-failed {
+  color: #f44336;
+}
+
+.upload-progress-text {
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 20px;
+  background: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #4CAF50;
+  transition: width 0.3s;
+}
+
+.skipped-count {
+  margin: 10px 0;
+  font-weight: bold;
+  color: #757575;
+}
+
+.content-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+}
+
+/* ---------- Button Styling ---------- */
+.button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #2196F3;
+  color: white;
+}
+
+.button:hover {
+  opacity: 0.9;
+}
+
+.button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.button-danger {
+  background: #f44336;
 }

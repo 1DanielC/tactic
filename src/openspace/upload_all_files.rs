@@ -1,8 +1,10 @@
 use crate::camera_fs::camera_finder::scan_for_camera_fs;
 use crate::api::http_client;
-use std::path::{Path, PathBuf};
+use crate::storage::{add_skipped_file, is_file_skipped, SkippedFile};
+use std::path::PathBuf;
+use std::sync::mpsc::Sender;
 use walkdir::WalkDir;
-use crate::openspace::get_upload_state::{TicTacUploadRequest, GetOrCreateUploadResponse};
+use crate::openspace::model::{TicTacUploadRequest, GetOrCreateUploadResponse};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 
@@ -15,39 +17,99 @@ struct FileToUpload {
     size: i64,
 }
 
-pub fn upload_all_files() -> Result<(), Box<dyn std::error::Error>> {
-    let volume = match scan_for_camera_fs() {
-        Some(v) => v,
+#[derive(Debug)]
+enum UploadResult {
+    Completed,
+    Skipped,
+}
+
+#[derive(Debug, Clone)]
+pub enum UploadEvent {
+    CameraFound(String),
+    FileStarted { filename: String, total_bytes: i64 },
+    FileProgress { filename: String, bytes_uploaded: i64, total_bytes: i64 },
+    FileSkipped { filename: String },
+    FileCompleted { filename: String },
+    FileFailed { filename: String, error: String },
+}
+
+pub fn upload_all_files(progress_tx: Option<Sender<UploadEvent>>) -> Result<(), Box<dyn std::error::Error>> {
+    let camera_info = match scan_for_camera_fs() {
+        Some(info) => info,
         None => {
             println!("No camera volume found");
             return Ok(()); // exit the function cleanly
         }
     };
 
-    println!("Found camera volume: {:?}", volume);
+    println!("Found camera volume: {:?}", camera_info.mount_point);
+    println!("Device ID: {}", camera_info.device_id);
 
-    // Step 1: Find all .insv files
-    let insv_files: Vec<PathBuf> = collect_insv_files(volume)?;
-    println!("Found {} .insv files", insv_files.len());
+    // Notify UI that camera was found
+    if let Some(ref tx) = progress_tx {
+        let _ = tx.send(UploadEvent::CameraFound(camera_info.device_id.clone()));
+    }
+
+    // Step 1: Find all .insv files (filtered by skipped files cache)
+    let insv_files: Vec<PathBuf> = collect_insv_files(camera_info.mount_point, &camera_info.device_id, progress_tx.as_ref())?;
+    println!("Found {} .insv files to upload", insv_files.len());
 
     if insv_files.is_empty() {
         println!("No files to upload");
         return Ok(());
     }
 
-    // Step 4: Upload each file
+    // Create a Tokio runtime for async operations
+    let runtime = tokio::runtime::Runtime::new()?;
+
+    // Step 2: Upload each file
     for file in insv_files {
+        let filename = file.file_name().unwrap().to_str().unwrap().to_string();
+        let file_size = file.metadata()?.len() as i64;
+
         let request = TicTacUploadRequest::new(
-            "Insta360 OneX2:sn:IXSE09DN9FBSPU".to_string(),
-            file.file_name().unwrap().to_str().unwrap().to_string(),
+            camera_info.device_id.clone(),
+            filename.clone(),
             "video/insv".to_string(),
-            file.metadata()?.len() as i64,
+            file_size,
             1,
         );
 
-        match futures::executor::block_on(upload_file(&file, request)) {
-            Ok(_) => println!("Successfully uploaded: {:?}", &file.file_name().unwrap()),
-            Err(e) => eprintln!("Failed to upload {:?}: {}", file, e),
+        // Notify UI that file upload is starting
+        if let Some(ref tx) = progress_tx {
+            let _ = tx.send(UploadEvent::FileStarted {
+                filename: filename.clone(),
+                total_bytes: file_size,
+            });
+        }
+
+        match runtime.block_on(upload_file(&file, request, progress_tx.clone(), &camera_info.device_id)) {
+            Ok(UploadResult::Completed) => {
+                println!("Successfully uploaded: {:?}", filename);
+                if let Some(ref tx) = progress_tx {
+                    let _ = tx.send(UploadEvent::FileCompleted { filename });
+                }
+            }
+            Ok(UploadResult::Skipped) => {
+                println!("File already exists on server, skipping: {:?}", filename);
+                // Add to skipped files cache
+                let skipped = SkippedFile::new(filename.clone(), file_size, camera_info.device_id.clone());
+                if let Err(e) = add_skipped_file(skipped) {
+                    eprintln!("Failed to cache skipped file: {}", e);
+                }
+                if let Some(ref tx) = progress_tx {
+                    let _ = tx.send(UploadEvent::FileSkipped { filename });
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to upload {:?}: {}", filename, e);
+                if let Some(ref tx) = progress_tx {
+                    let _ = tx.send(UploadEvent::FileFailed {
+                        filename,
+                        error: e.to_string(),
+                    });
+                }
+            }
         }
     }
 
@@ -55,7 +117,11 @@ pub fn upload_all_files() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn collect_insv_files(volume: PathBuf) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
+fn collect_insv_files(
+    volume: PathBuf,
+    device_id: &str,
+    progress_tx: Option<&Sender<UploadEvent>>,
+) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let mut insv_files = Vec::new();
 
     for entry in WalkDir::new(volume) {
@@ -64,7 +130,29 @@ fn collect_insv_files(volume: PathBuf) -> Result<Vec<PathBuf>, Box<dyn std::erro
                 if entry.file_type().is_file() {
                     if let Some(ext) = entry.path().extension() {
                         if ext.eq_ignore_ascii_case("insv") {
-                            insv_files.push(entry.path().to_path_buf());
+                            let path = entry.path().to_path_buf();
+
+                            // Check if this file is in the skipped cache
+                            if let Some(filename) = path.file_name().and_then(|f| f.to_str()) {
+                                if let Ok(metadata) = entry.metadata() {
+                                    let size = metadata.len() as i64;
+
+                                    // Skip if already in cache
+                                    if is_file_skipped(filename, size, device_id) {
+                                        println!("Skipping cached file: {}", filename);
+
+                                        // Send event for cached skipped file
+                                        if let Some(tx) = progress_tx {
+                                            let _ = tx.send(UploadEvent::FileSkipped {
+                                                filename: filename.to_string(),
+                                            });
+                                        }
+                                        continue;
+                                    }
+                                }
+                            }
+
+                            insv_files.push(path);
                         }
                     }
                 }
@@ -76,7 +164,12 @@ fn collect_insv_files(volume: PathBuf) -> Result<Vec<PathBuf>, Box<dyn std::erro
     Ok(insv_files)
 }
 
-async fn upload_file(file: &PathBuf, req: TicTacUploadRequest) -> Result<(), Box<dyn std::error::Error>> {
+async fn upload_file(
+    file: &PathBuf,
+    req: TicTacUploadRequest,
+    progress_tx: Option<Sender<UploadEvent>>,
+    _device_id: &str,
+) -> Result<UploadResult, Box<dyn std::error::Error>> {
     // Step 1: Create the upload on the backend
     let client = http_client();
     let create_url = format!("{}/tictac/uploads", API_BASE_URL);
@@ -98,13 +191,14 @@ async fn upload_file(file: &PathBuf, req: TicTacUploadRequest) -> Result<(), Box
         Some(id) => id,
         None => {
             println!("File already exists on server, skipping upload");
-            return Ok(());
+            return Ok(UploadResult::Skipped);
         }
     };
 
     // Step 3: Upload the file in chunks
     let mut file_handle = File::open(file)?;
     let file_size = req.size;
+    let filename = req.device_filename.clone();
     let num_parts = req.num_parts.max(1); // Ensure at least 1 part
     let chunk_size = if num_parts == 1 {
         file_size
@@ -139,7 +233,17 @@ async fn upload_file(file: &PathBuf, req: TicTacUploadRequest) -> Result<(), Box
         }
 
         println!("Uploaded chunk {}/{} (bytes {}-{})", part + 1, num_parts, start, end);
+
+        // Send progress update
+        if let Some(ref tx) = progress_tx {
+            let bytes_uploaded = end + 1;
+            let _ = tx.send(UploadEvent::FileProgress {
+                filename: filename.clone(),
+                bytes_uploaded,
+                total_bytes: file_size,
+            });
+        }
     }
 
-    Ok(())
+    Ok(UploadResult::Completed)
 }
